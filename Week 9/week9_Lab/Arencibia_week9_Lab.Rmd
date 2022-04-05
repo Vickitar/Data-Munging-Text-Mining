@@ -1,0 +1,259 @@
+---
+title: 'Week 9: Lab - Using aRules on the Titanic dataset '
+author: '[Victor Arencibia]'
+date: '[3/13/2022]'
+output: html_document
+---
+
+---
+
+# Instructions
+Use the Titanic dataset to explore descriptive statistics, functions, and
+association rules. Download the titanic dataset `titanic.raw.rdata` from one
+of two locations:
+
+- https://github.com/ethen8181/machine-learning/tree/master/association_rule/R
+- https://sites.google.com/a/rdatamining.com/www/data/titanic.raw.rdata?attredirects=1
+ 
+Note that it is not a cvs file, but rather an RData workspace. So, to load the 
+data (assuming you saved it to the project's data folder), one would do:
+
+``load("data/titanic.raw.rdata")``
+
+You need to look at titanic.raw (the name of the R dataset)
+
+``t <- titanic.raw``
+
+Now that you have the datafile, do some descriptive statistics, getting some 
+extra practice using R. Take the Quiz for Step 1 and 2. However your submission 
+**MUST** include the process of you calculating the following values in Step 1 and 2.
+
+---
+
+```{r setup, message = FALSE}
+# Add your library below.
+
+#install.packages("dplyr")
+library(dplyr)
+#("arules")
+library(arules)
+#install.packages("arulesViz")
+library(arulesViz)
+require(datasets)
+require(ggvis)
+require(dplyr)
+require(magrittr)
+```
+
+# Step 0 - Load the data
+Using the instructions above, load the dataset and save it as `t`.
+
+```{r, "Step 0"}
+# Write your code below.
+
+load("data/titanic.raw.rdata")
+t <- titanic.raw
+
+summary(t)
+length(t)
+str(t)
+```
+---
+
+
+# Step 1 - Descriptive stats (0.5 point for each answer)
+
+1. Compute the percentage of people that survived.
+2. Compute the percentage of people that were children.
+3. Compute the percentage of people that were female.
+4. Finally, compute the percentage of people that were in first class.
+
+
+# Write your code below.
+```{r, "Step 1"}
+totalpassengers <- tally(t)
+totalpassengers
+
+survivors <- filter(t, Survived == "Yes") 
+totalsurvivors <- tally(survivors)
+totalsurvivors
+SurvivorPercent <- round((totalsurvivors/totalpassengers)*100)
+SurvivorPercent
+# 32%
+
+Children <- filter(t, Age == "Child")
+Children <- tally(Children)
+ChildrenPercent <- round((Children/totalpassengers)*100)
+ChildrenPercent
+# 5%
+
+  
+Female <- filter(t, Sex == "Female") 
+Female <- tally(Female)
+FemalePercent <- round((Female/totalpassengers)*100)
+FemalePercent
+# 21 %
+
+
+firstClass <- filter(t, Class == "1st")
+firstClass <- tally(firstClass)
+FirstClassPercent <- round((firstClass/totalpassengers)*100)
+FirstClassPercent
+# 15% 
+```
+
+---
+
+# Step 2 - More descriptive stats (0.5 point for each answer)
+
+
+1. What percentage of children survived? Your answer should be written such as # 13.75% of children survived
+2. What percentage of female survived?
+3. What percentage of first-class people survived?
+4. What percentage of third-class people survived?
+
+```{r, "Step 2"}
+# Write your code below.
+
+Children2 <- t %>%
+  group_by(Age,Survived) %>%
+  summarise (number = n()) %>%
+  mutate (freq = (number / sum(number)*100))
+View(Children2)
+#52.29% of children survived.
+
+Female2 <- t %>%
+  group_by(Sex,Survived) %>%
+  summarise (number = n()) %>%
+  mutate (freq = (number / sum(number)*100))
+View(Female2)
+# 73.19 of females survived  
+
+Class <- t %>%
+  group_by(Class,Survived) %>%
+  summarise (number = n()) %>%
+  mutate (freq = (number / sum(number)*100))
+Class
+# 62.46 of first class survived
+# 25.21 of Third class people survived
+
+```
+
+---
+
+# Step 3 - Writing a function (0.5 point for each answer)
+
+## Step 3.1 - Function 1
+Write a function that returns a new dataframe of people that satisfies the 
+specified criteria of sex, age, class and survived as parameters. I'm giving you 
+the answer for this question:
+
+```
+myfunction1 <- function(a,b,c,d){
+df1 <- t[t$Class == a,] # filter the data that satisfied the criteria that "Class" = a
+df2 <- df1[df1$Sex == b,] # filter the data that satisfied the criteria that "Sex" = b
+df3 <- df2[df2$Age == c,] # filter the data that satisfied the criteria that "Age" = c
+df4 <- df3[df3$Survived == d,] # filter the data that satisfied the criteria that "Survived" = d
+return(df4)}
+# test the function with a sample data
+myfunction1("1st","Female","Adult","No")
+```
+
+```{r, "Step 3.1"}
+# Write your code below.
+
+myfunction1 <- function(a,b,c,d){
+df1 <- t[t$Class == a,] 
+df2 <- df1[df1$Sex == b,] 
+df3 <- df2[df2$Age == c,] 
+df4 <- df3[df3$Survived == d,]
+return(df4)}
+# test the function with a sample data
+myfunction1("1st","Female","Adult","No")
+
+```
+
+## Step 3.2 - Function 2
+Write a function, using the previous function, that calculates the percentage 
+(who lives, who dies) for a specified (parameters) of class, gender and age 
+considering the entire number of data. The function passes four arguments. 
+Include the following code properly in your function by improvising names of objects.
+
+```
+p <- nrow(df)/nrow(t) # calculate the percentage
+```
+
+```{r, "Step 3.2"}
+# Write your code below.
+df <- function(a,b,c,d){
+df1 <- t[t$Class == a,] 
+df2 <- df1[df1$Sex == b,] 
+df3 <- df2[df2$Age == c,] 
+df4 <- df3[df3$Survived == d,]
+count(df4)
+p <- (nrow(df4)/nrow(t))*100
+return(p)}
+# test the function with a sample data
+df("1st","Female","Adult","No")
+
+
+
+```
+
+## Step 3.3 - Use the function (male)
+Use the function to compare age and third-class male survival rates. 
+
+```{r, "Step 3.3"}
+# Write your code below.
+df("3rd","Male","Child","Yes")
+
+df("3rd","Male","Adult","Yes")
+# 3.4% survival rate for Adult males in 3rd class
+
+
+
+```
+People in which category are more likely to survive? 
+
+> [3rd class male adults]
+
+
+## Step 3.4 - Use the function (female)
+Use the function to compare age and first-class female survival rates.
+
+```{r, "Step 3.4"}
+# Write your code below.
+
+df("1st", "Female","Child", "Yes")
+df("1st", "Female","Adult", "Yes")
+
+```
+People in which category are more likely to survive? 
+
+> [1st class female adults]
+
+---
+
+# Step 4 - Use aRules (0.5 point for each answer)
+
+1. Use aRules to calculate some rules (clusters) for the titanic dataset.
+2. Visualize the results.
+3. Pick the three most interesting and useful rules. Explain these rules using natural language. **Answer this in the space provided below.**
+4. How does this compare to the descriptive analysis we did on the same data set? 
+Think critically. What was possible using one method that was not possible using 
+the other method? **Answer this in the space provided below.**
+
+```{r, "Step 4.1"}
+# Write your code below.
+t2 <- apriori(t, parameter = list(support=0.005,confidence=0.5))
+plot(t2)
+inspect(sort(t2,by="lift"))
+inspect(sort(t2, by="support"))
+inspect(sort(t2, by="confidence"))
+```
+
+**Answer part 3 and 4 below.**
+
+> [The rules lift implies that 2nd class adults that survived were likely to be Female with a lift of 3.98 likelyhood. ]
+
+

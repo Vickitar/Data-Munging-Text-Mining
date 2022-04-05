@@ -1,0 +1,80 @@
+---
+title: "Week 5: Lab - Word Cloud Chapter Challenge"
+author: "[Name]"
+date: "[Date]"
+output: html_document
+---
+
+---
+
+# Instructions
+Create a word cloud using the `text` column from a real twitter dataset 
+(sample.csv).
+
+---
+
+```{r setup, message = FALSE}
+# Add your library below.
+
+
+
+```
+
+# Step 1. Load and Clean the Data
+Load in the `sample.csv` dataset from this project's data folder. 
+Please make sure you transform the document to lowercase, delete stopwords & numbers & punctuation (1 point).
+
+```{r, "Step 1"}
+# Write your code below.
+
+
+```
+
+---
+
+# Step 2. Adjust the Stopwords
+Add "can" and "just" to the stopwords list (1 point). 
+
+```{r, "Step 2"}
+# Write your code below.
+
+
+```
+
+---
+
+# Step 3. Adjust the Theme
+Use five colors and "Accent" for color theme (1 point).
+
+```{r, "Step 3"}
+# Write your code below.
+
+
+```
+
+---
+
+# Step 4. Analysis
+Does the word cloud convey the key points of the document? (1 point). 
+
+
+> [Write your answer here]
+
+---
+
+# Step 5. Compile
+Submit the compiled file. 
+The wordcloud may prevent you from compiling. If so, do the following: 
+
+```
+jpeg('p1.jpg')  
+wordcloud(cloudFrame.t$word, cloudFrame.t$freq)  
+dev.off()
+```
+This will make the graphs save in the current working directory. 
+
+```{r, "Step 5"}
+# Write your code below, if necessary.
+
+
+```

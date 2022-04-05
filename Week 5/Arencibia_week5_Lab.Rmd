@@ -1,0 +1,127 @@
+---
+title: "Week 5: Lab - Word Cloud Chapter Challenge"
+author: "Victor Arencibia"
+date: "2/12/2022"
+output: html_document
+---
+
+---
+
+# Instructions
+Create a word cloud using the `text` column from a real twitter dataset 
+(sample.csv).
+
+---
+
+```{r setup, message = FALSE}
+# Add your library below.
+
+require(tm)
+require(wordcloud)
+
+
+
+
+
+```
+
+# Step 1. Load and Clean the Data
+Load in the `sample.csv` dataset from this project's data folder. 
+Please make sure you transform the document to lowercase, delete stopwords & numbers & punctuation (1 point).
+
+```{r, "Step 1"}
+# Write your code below.
+
+#install.packages("readxl")
+library(readxl)
+sampledf <- read.csv("data/sample.csv", stringsAsFactors = F)
+
+head(sample)
+
+tail(sampledf,20)
+str(sampledf)
+
+
+words.vec <- VectorSource(sampledf)
+words.corpus <- Corpus(words.vec)
+
+words.corpus <- tm_map(words.corpus, content_transformer(tolower))
+words.corpus <- tm_map(words.corpus, removePunctuation)
+words.corpus <- tm_map(words.corpus, removeNumbers)
+words.corpus <- tm_map(words.corpus, removeWords, stopwords("english"))
+
+tdm <- TermDocumentMatrix(words.corpus)
+
+str(tdm)
+inspect(tdm[1:15,1:15])
+
+
+```
+
+---
+
+# Step 2. Adjust the Stopwords
+Add "can" and "just" to the stopwords list (1 point). 
+
+```{r, "Step 2"}
+# Write your code below.
+# I had to search google on how to add addition stopwords.
+
+words.corpus <- tm_map(words.corpus, removeWords, c(stopwords("english"),"can", "just")) 
+
+
+```
+
+---
+
+# Step 3. Adjust the Theme
+Use five colors and "Accent" for color theme (1 point).
+
+```{r, "Step 3"}
+# Write your code below.
+
+m <- as.matrix(tdm)
+wordCounts <- rowSums(m)
+wordCounts <- sort(wordCounts, decreasing = TRUE)
+head(wordCounts)
+cloudFrame<- data.frame(word=names(wordCounts), freq=wordCounts)
+library(RColorBrewer)
+wordcloud(names(wordCounts), wordCounts, min.freq=2, max.words=50, rot.per=0.35, 
+          colors=brewer.pal(5, "Accent"))
+                                             
+?brewer.pal       
+
+```
+
+---
+
+# Step 4. Analysis
+Does the word cloud convey the key points of the document? (1 point). 
+
+
+> I read through parts of the sample exel document and although I couldnt pinpoint exactly how many of each word there was there was definitely a theme. Considering its a post regarding 
+Virgin America's reviews it doesnt surprise me that the most popular words were America, Virgin America, and time. The word cloud is an impressive visualization tool we as data scientist & engineers
+could use once we are producing for a company. It allows the viewing to immediatly see what the most common words are, if Negative is in giant letters accross the screen than we know it's something
+the orignization would have to address. Especially if we are using a file with thousands of variables and words. 
+
+---
+
+# Step 5. Compile
+Submit the compiled file. 
+The wordcloud may prevent you from compiling. If so, do the following: 
+
+```
+jpeg('p1.jpg')  
+wordcloud(cloudFrame.t$word, cloudFrame.t$freq)  
+dev.off()
+```
+This will make the graphs save in the current working directory. 
+
+```{r, "Step 5"}
+# Write your code below, if necessary.
+#jpeg('p1.jpg')  
+#wordcloud(names(wordCounts), wordCounts, min.freq=2, max.words=50, rot.per=0.35, 
+          #colors=brewer.pal(5, "Accent"))  
+#dev.off()
+
+```

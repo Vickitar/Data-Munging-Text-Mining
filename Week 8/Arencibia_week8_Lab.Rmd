@@ -1,0 +1,232 @@
+---
+title: 'Week 8: Lab - Linear Modeling (Making Predictions)'
+author: '[Victor Arencibia]'
+date: '[3/5/2022]'
+output: html_document
+---
+
+---
+
+# Instructions
+The textbook’s chapter on linear models (“Line Up, Please”) introduces 
+**linear predictive modeling** using the workhorse tool known as 
+**multiple regression**. The term “multiple regression” has an odd history, 
+dating back to an early scientific observation of a phenomenon called 
+**“regression to the mean”**. These days, multiple regression is just an 
+interesting name for using a simple linear modeling technique to measuring the 
+connection between one or more **predictor variables** and an **outcome variable**. 
+
+In this exercise, we are going to use an open dataset to explore antelope population.
+
+This is the first exercise of the semester where there is no sample R code to 
+help you along. Because you have had so much practice with R by now, you can 
+create and/or find all of the code you need to accomplish these steps.
+
+---
+
+```{r setup, message = FALSE}
+# Add your library below.
+library(ggplot2)
+library(readxl)
+
+```
+
+
+# Step 1 - Define "Model"
+Write a definition of a model, based on how the author uses it in this chapter.
+
+> [ A Model in the use of data analytics is the prediction analyses that are created from a statisticffl process from procedures and packages offered by R. We analyze data that the user supplies such as dataframes and then calculate a set of numerical coefficients that help us with prediction. ]
+
+
+---
+
+
+# Step 2 - Review the data 
+You can find the data from Cengage's website. 
+This URL will enable you to download the dataset into excel: 
+
+* http://college.cengage.com/mathematics/brase/understandable_statistics/7e/students/datasets/mlr/excel/mlr01.xls
+
+The more general website can be found at:
+
+* http://college.cengage.com/mathematics/brase/understandable_statistics/7e/students/datasets/mlr/frames/frame.html
+
+If you view this in a spreadsheet, you will find four columns of a small dataset:
+
+* The first column shows the number of fawn in a given spring (fawn are baby antelope). 
+* The second column shows the population of adult antelope.
+* The third shows the annual precipitation that year. 
+* And finally the last column shows how bad the winter was during that year.
+
+```{r, "Step 2"}
+# No code necessary; Just review the data.
+```
+
+---
+
+
+# Step 3 - Read in the data
+You have the option of saving the file to your computer and reading it into R, 
+or you can read the data directly from the web into a dataframe.
+
+```{r, "Step 3"}
+# Write your code below.
+mlr01 <- read_excel("mlr01.xls")
+View(mlr01)
+
+dataset <- mlr01
+
+```
+
+
+---
+
+
+# Step 4 - Inspect the data
+You should inspect the data using `str()` to make sure that 1) all the cases have
+been read in (n=8 years of observations) and 2) that there are four variables.
+
+```{r, "Step 4"}
+# Write your code below.
+
+str(dataset)
+```
+
+
+---
+
+
+# Step 5 - Create bivariate plots
+Create bivariate plots of the number of baby fawns versus adult antelope population,
+precipitation that year, and severity of the winter.  
+**Your code should produce three separate plots.** Make sure the y-axis and x-axis are labeled. 
+Keeping in mind that the number of fawns is the outcome (or dependent) variable, 
+which axis should it go on in your plots? You can also create scatter plots where 
+size and colors reflect the two variables you didn't use 
+(remember the visualization homework/lab. If you create these plots, you can earn extra 1 point).
+
+## Step 5.1 - Fawn Count by Adult Population
+```{r, "Step 5.1"}
+# Write your code below.
+#plot(dataset$X2, dataset$X1) 
+
+# For these steps i reffrenced pages chapter 12 " Pictures versus Numbers" pages 138 - 155.
+
+# The first column shows the number of fawn in a given spring (fawn are baby antelope). 
+# The second column shows the population of adult antelope.
+
+g <- ggplot(dataset, aes(x=dataset$X2, y=dataset$X1)) + geom_point()
+g <- g + ggtitle("Fawn Count by Adult Population") + xlab("Adult") + ylab("Fawn")
+g 
+
+
+```
+
+## Step 5.2 - Fawn Count by Annual Precipitation
+```{r, "Step 5.2"}
+# Write your code below.
+
+# The second column shows the population of adult antelope.
+# The third shows the annual precipitation that year. 
+
+
+g2 <- ggplot(dataset, aes(x=X3, y=X1)) + geom_point()
+g2 <- g2 + ggtitle("Fawn Count by Annual Precipiation") + xlab("Annual Precipiation") + ylab("Fawn")
+g2 
+
+
+```
+
+## Step 5.3 - Fawn Count by Winter Severity Index
+```{r, "Step 5.3"}
+# Write your code below.
+
+# The third shows the annual precipitation that year. 
+# And finally the last column shows how bad the winter was during that year
+
+g3 <- ggplot(dataset, aes(x=X4, y=X1)) + geom_point()
+g3 <- g3 + ggtitle("Fawn Count by Winter Severity Index") + xlab("Winter Severity") + ylab("Fawn")
+g3 
+
+
+
+```
+
+
+---
+
+
+# Step 6 - Create regression models 
+Create three regression models of increasing complexity using `lm()`, then
+analyze the results.
+
+* **Model one**: Fit the model to predict the number of fawns from the severity of the winter.
+* **Model two**: Fit the model to predict the number of fawns from two variables
+(one should be the severity of the winter).
+* **Model three**: Fit the model to predict the number of fawns from the three other variables.  
+
+## Step 6.1 - Predict Fawn Count by Winter Severity Index
+```{r, "Step 6.1"}
+# Write your code below.
+
+
+mod1 <- lm(formula=X1 ~ X4, data=dataset)
+mod1
+summary(mod1)
+
+
+# The lm command takes two parameters, the first tells lm to use X4 ( winter severity) to predict fawn population. the ~ tells lm() which independent and depentend variables to include in the model. We can use logic to read this as "Use winter severity to predict fawn population." 
+
+
+```
+
+## Step 6.2 - Predict Fawn Count by Winter Severity Index + your choice of variable
+```{r, "Step 6.2"}
+# Write your code below.
+
+# For this we will be adding an additional variable to our previous code. Ill be choosing X2 "population of adult antelope." 
+
+mod2 <- lm(formula=X1 ~ X4 + X2, data=dataset)
+mod2
+
+
+summary(mod2)
+
+# the instructions dont specify plotting our information, but for the sake of practice and repition I'll be plotting them with the plot() function that was reintroduced in Chapter 16. 
+
+plot(mod2)
+```
+
+## Step 6.3 - Predict Fawn Count by the three other variables
+```{r, "Step 6.3"}
+# Write your code below.
+
+mod3 <- lm(formula=X1 ~ X4 + X2 + X3, data=dataset)
+mod3
+summary(mod3)
+
+plot(mod3)
+
+```
+
+## Step 6.4 - Analysis
+Which regression model works best? 
+Which of the predictors are statistically significant in each model? 
+If you wanted to create the most parsimonious model 
+(i.e., the one that did the best job with the fewest predictors), 
+what would it contain? ***You MUST answer these questions***.
+
+1. The linear model (also known and regression model) works when we have two or more variables to ascertain a relationship. This works best with large datasets as we are able to see what items correlate. But we must always remember that Correlation does not equal causation! lm() is best used when we have numerical values. 
+
+2. Model 1 Winter Severity(X4) is statistically significant with a P Value of less than .05 (value=0.036263). 
+Model 2 Adult population(X2) is statistically significant with a P Value of less than .05 (value=0.0112).
+Model 3 All values are statistically significant. 
+
+If we are going with the model with the most variance we would choose Model 1, since it is accounting for 54% of the Variance in the fawn population.The R-Squared is 54.6%. 
+
+---
+
+
+# Step 7 - Upload the compiled file
+Please only include print outs of data sets using "head" function. 
+I will take points off if you include more than two pages of dataset print outs.

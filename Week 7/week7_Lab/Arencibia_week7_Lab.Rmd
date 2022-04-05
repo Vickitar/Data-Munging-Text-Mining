@@ -1,0 +1,450 @@
+---
+title: "Week 7: Lab - Text Mining (Sentiment Analysis)"
+author: 'Victor Arencibia'
+date: '2/25/2022'
+output: html_document
+---
+
+---
+
+# Instructions
+Conduct sentiment analysis on MLK's speech to determine how positive/negative
+his speech was. Split his speech into four quartiles to see how that sentiment 
+changes over time.Create two bar charts to display your results.
+
+---
+
+```{r setup, message = FALSE}
+ #Add your library below.
+library(readxl)
+require(tm)
+require(wordcloud)
+library(RColorBrewer)
+library(XML)
+library(tidyverse)
+library("tokenizers")
+library(tokenizers)
+```
+
+# Step 1 - Read in the Bing Dictionary
+Sentiment analysis relies on a “dictionary”. Most dictionaries categorize words as either positive or negative, but some dictionaries use emotion (such as the NRC EmoLex Dictionary). Each dictionary is different. This assignment will introduce you to the **Bing dictionary**, which researchers created by categorizing words used in online reviews from Amazon, Yelp, and other similar platforms.
+
+## Step 1.1 - Find the files
+The files needed for this lab are stored in a RAR file. You must extract the files from the compressed RAR file by using a third-party application, such as 7Zip, winZip, or another program. Use google to find a RAR file extractor.
+
+Find the RAR file on the UIC website (contains two text files: positive words and negative words). Ths file is about halfway down the page, listed as “A list of English positive and negative opinion words or sentiment words”. Use the link below:
+
+* http://www.cs.uic.edu/~liub/FBS/sentiment-analysis.html  
+
+Save these files in your "data" folder. 
+
+```{r, "Step 1.1"}
+# No code necessary; Save the files in your project's data folder.
+```
+
+## Step 1.2 - Create vectors
+Create two vectors of words, one for the positive words and one for the 
+negative words.
+
+```{r, "Step 1.2"}
+# Write your code below.
+pos <- "data/positive-words.txt"
+neg <- "data/negative-words.txt"
+
+p <- scan(pos, character(0),sep = "\n")
+n <- scan(neg, character(0),sep = "\n")
+
+```
+
+## Step 1.3 - Clean the files
+Note that when reading in the word files, there might be lines at the start 
+and/or the end that will need to be removed (i.e. you should clean your dataset).
+
+```{r, "Step 1.3"}
+# Write your code below.
+
+head(p,35)
+head(n,35)
+
+# I noticed that line 29 of the Positive text file has a word called "a+" removing that could cause issues? Not sure how if it would make a difference but Ive made the decision to remove it.
+
+p <- p[-1:-30]
+head(p)
+
+n <- n[-1:-30]
+head(n)
+
+
+```
+
+
+---
+
+
+# Step 2: Process in the MLK speech
+Text is stored in many different formats, such as TXT, CSV, HTML, and JSON. In this lab, you are going to experience how to “parse HTML” for text analysis.
+
+## Step 2.1 - Find and read in the file.
+Find MLK’s speech on the AnalyticTech website. You can either read in the file using the XML package, or you can copy/paste the document into a TXT file.
+
+Use the link below:
+
+* http://www.analytictech.com/mb021/mlk.htm  
+
+
+```{r, "Step 2.1"}
+# Write your code below.
+
+mlkLocatoin <- URLencode("http://www.analytictech.com/mb021/mlk.htm")
+doc.html <- htmlTreeParse(mlkLocatoin,useInternal = TRUE)
+
+
+
+```
+
+## Step 2.2 - Parse the files
+If you choose to read the raw HTML using the XML package, you will need to parse the HTML object. For this exercise, we can split the HTML by the paragraph tag and then store the paragraphs inside a vector. The following code might help:
+
+```
+# Read and parse HTML file
+
+doc.html = htmlTreeParse('http://www.analytictech.com/mb021/mlk.htm', 
+                         useInternal = TRUE)
+
+# Extract all the paragraphs (HTML tag is p, starting at
+# the root of the document). Unlist flattens the list to
+# create a character vector.
+
+doc.text = unlist(xpathApply(doc.html, '//p', xmlValue))
+
+# Replace all \n by spaces
+doc.text = gsub('\\n', ' ', doc.text)
+
+# Replace all \r by spaces
+doc.text = gsub('\\r', ' ', doc.text)
+```
+
+```{r, "Step 2.2"}
+# Write your code below, if necessary.
+mlk <- unlist(xpathApply(doc.html, '//p', xmlValue))
+head(mlk,3)
+
+mlk = unlist(xpathApply(doc.html, '//p', xmlValue))
+mlk = gsub('\\n', ' ', mlk)
+mlk = gsub('\\r', ' ', mlk)
+
+head(mlk,3)
+```
+
+## Step 2.3 - Transform the text
+Text must be processed before it can be analyzed. There are many ways to process text. This class has introduced you to two ways:
+
+* Using the TM package to manipulate term-document matrices
+* Using the tidytext package to unnest tokens
+
+Either create a **term-document matrix** or **unnest the tokens**.
+
+```{r, "Step 2.3"}
+# Write your code below.
+
+words.vec <- VectorSource(mlk)
+words.corpus <- Corpus(words.vec)
+
+words.corpus
+
+words.corpus <- tm_map(words.corpus, content_transformer(tolower))
+words.corpus <- tm_map(words.corpus, removePunctuation)
+words.corpus <- tm_map(words.corpus, removeNumbers)
+words.corpus <- tm_map(words.corpus, removeWords, stopwords("english"))
+
+tdm <- TermDocumentMatrix(words.corpus)
+tdm
+
+inspect(tdm)
+```
+## Step 2.4 - Create a list of word frequencies
+Create a list of counts for each word.
+
+```{r, "Step 2.4"}
+# Write your code below.
+
+m <- as.matrix(tdm)
+wordCounts <- rowSums(m)
+wordCounts <- sort(wordCounts, decreasing = TRUE)
+head(wordCounts)
+
+wordCounts
+
+totalWords <- sum(wordCounts)
+totalWords
+
+words <- names(wordCounts)
+
+```
+
+---
+
+# Step 3: Positive words
+Determine how many positive words were in the speech. Scale the number based on 
+the total number of words in the speech. 
+**Hint:** 
+One way to do this is to use `match()` and then `which()`. If you choose the tidyverse method, try `group_by()` and then `count()`.
+
+```{r, "Step 3"}
+# Write your code below.
+matched <- match(words,p, nomatch = 0)
+head(matched,30)
+
+pWords <- words[which(matched !=0)]
+pWords
+pCounts <- wordCounts[which(matched !=0)]
+head(pCounts)
+nPos <- sum(pCounts)
+nPos
+
+# I was strugging to find out why i kept getting NA as the sum for the wordCounts value. Turns out I did not calculate the total number of words with totalWords <- sum(wordCounts) and I didnt set the vector that just has all the words. I refrenced the book on page 191 and figured out my mistake. 
+
+```
+
+---
+
+# Step 4: Negative words
+Determine how many negative words were in the speech. Scale the number based on the total number of words in the speech.  
+**Hint:** 
+This is basically the same as Step 3.
+
+```{r, , "Step 4"}
+# Write your code below.
+matched <- match(words,n, nomatch = 0)
+head(matched,30)
+
+nWords <- words[which(matched !=0)]
+nWords
+nCounts <- wordCounts[which(matched !=0)]
+head(nCounts)
+sum(nCounts)
+
+
+```
+
+---
+
+# Step 5: Get Quartile values
+Redo the “positive” and “negative” calculations for each 25% of the speech by
+following the steps below.
+
+## 5.1 Compare the results in a graph
+Compare the results (e.g., a simple bar chart of the 4 numbers).  
+For each quarter of the text, you calculate the positive and negative ratio, 
+as was done in Step 4 and Step 5.  
+The only extra work is to split the text to four equal parts, then 
+visualize the positive and negative ratios by plotting. 
+
+The final graphs should look like below:  
+![Step 5.1 - Negative](data/week6lab1.PNG)
+![Step 5.1 - Positive](data/week6lab2.PNG)
+
+**HINT:** 
+The code below shows how to start the first 25% of the speech.
+Finish the analysis and use the same approach for the rest of the speech.
+
+```
+# Step 5: Redo the positive and negative calculations for each 25% of the speech
+  # define a cutpoint to split the document into 4 parts; round the number to get an interger
+  cutpoint <- round(length(words.corpus)/4)
+ 
+# first 25%
+  # create word corpus for the first quarter using cutpoints
+  words.corpus1 <- words.corpus[1:cutpoint]
+  # create term document matrix for the first quarter
+  tdm1 <- TermDocumentMatrix(words.corpus1)
+  # convert tdm1 into a matrix called "m1"
+  m1 <- as.matrix(tdm1)
+  # create a list of word counts for the first quarter and sort the list
+  wordCounts1 <- rowSums(m1)
+  wordCounts1 <- sort(wordCounts1, decreasing=TRUE)
+  # calculate total words of the first 25%
+```
+
+```{r}
+# Write your code below.
+# Pasted code from above
+cutpoint <- round(length(words.corpus)/4)
+
+words.corpus1 <- words.corpus[1:cutpoint]
+tdm1 <- TermDocumentMatrix(words.corpus1)
+m1 <- as.matrix(tdm1)
+wordCounts1 <- rowSums(m1)
+wordCounts1 <- sort(wordCounts1, decreasing=TRUE)
+
+# calculating cutpoint1, having a vector. 
+words1 <- names(wordCounts1)
+words1
+matched1 <- match(words1, p, nomatch = 0)
+head(matched1,30)  
+# Since im having errors with my code showing NA as the positive count i checked to make sure that the words are in fact matching accuratly. Looks like they are since #13 is "great" in both words1 & positive words. 
+matched1[13]
+p[856]
+words1[13]
+
+#counts of postive words in cutpoint 1
+cp1pCounts <- wordCounts1[which(matched1 != 0)]
+cp1pCounts
+length(cp1pCounts)
+cp1pCounts
+cp1pPOS <- sum(cp1pCounts)
+cp1pPOS
+
+# HA!! Figured it out, i was not including "matched1" in the which(), i was using regular matched... 
+# Now for negative in cp1 counts
+
+matched1 <- match(words1, n, nomatch = 0)
+
+cp1nCounts <- wordCounts1[which(matched1 != 0)]
+cp1nCounts
+length(cp1nCounts)
+head(cp1nCounts)
+
+cp1nPOS <- sum(cp1nCounts)
+
+sum(cp1nCounts)
+
+sentiment1 <- cp1pPOS/cp1nPOS
+sentiment1
+# after confirming and manually counting each for positive and negative the values are each 12. 
+# Now we will begind cutpoint 2. As far as i am aware we will just be copypasting the previous code but making sure 110% we are changing the names of the values. 
+
+
+words.corpus2 <- words.corpus[cutpoint+1:cutpoint*2]
+tdm2 <- TermDocumentMatrix(words.corpus2)
+m2 <- as.matrix(tdm2)
+wordCounts2 <- rowSums(m2)
+wordCounts2 <- sort(wordCounts2, decreasing=TRUE)
+
+words2 <- names(wordCounts2)
+words2
+matched2 <- match(words2, p, nomatch = 0)
+head(matched2,30)  
+
+matched2[24]
+p[378]
+words2[24]
+# Everything here checks out, Both "creative" are in positive 378 & words2 #24. Nice!
+# Now for calculating amount. 
+
+cp2pCounts <- wordCounts2[which(matched2 != 0)]
+cp2pCounts
+length(cp2pCounts)
+cp2pCounts
+cp2pPOS <- sum(cp2pCounts)
+cp2pPOS
+# Here in cutpoint2 we have a total of 5 postive words. 
+# Next is negative
+
+
+matched2 <- match(words2, n, nomatch = 0)
+head(matched2,30)  
+
+matched2[25]
+n[904]
+words2[25]
+# Everything here checks out, Both "degenerate" are in negative 904 & words2 #25. Nice!
+
+cp2nCounts <- wordCounts2[which(matched2 != 0)]
+cp2nCounts
+length(cp2nCounts)
+cp2nCounts
+cp2nPOS <- sum(cp2nCounts)
+cp2nPOS
+
+sentiment2 <- cp2pPOS/cp2nPOS
+sentiment2
+# Here in cutpoint2 we have a sum of 11 negative words.
+# Beginning cutpoint 3. 
+
+words.corpus3 <- words.corpus[cutpoint+2: cutpoint *3]
+tdm3 <- TermDocumentMatrix(words.corpus3)
+m3 <- as.matrix(tdm3)
+wordCounts3 <- rowSums(m3)
+wordCounts3 <- sort(wordCounts3, decreasing=TRUE)
+
+words3 <- names(wordCounts3)
+words3
+matched3 <- match(words3, p, nomatch = 0)
+
+# Now we grab the positive values. 
+
+cp3pCounts <- wordCounts3[which(matched3 != 0)]
+cp3pCounts
+length(cp3pCounts)
+cp3pCounts
+cp3pPOS <- sum(cp3pCounts)
+cp3pPOS
+
+# Our sum shows 3 positive words. 
+
+matched3 <- match(words3, n, nomatch = 0)
+head(matched2,30)
+
+cp3nCounts <- wordCounts3[which(matched3 != 0)]
+cp3nCounts
+length(cp3nCounts)
+cp3nCounts
+cp3nPOS <- sum(cp3nCounts)
+cp3nPOS
+sentiment3 <- cp3pPOS/cp3nPOS
+sentiment3
+# Our sum shows 4 negative words. 
+# Now we do cutpoint 4. 
+
+words.corpus4 <- words.corpus[cutpoint+3: cutpoint *4]
+tdm4 <- TermDocumentMatrix(words.corpus4)
+m4 <- as.matrix(tdm4)
+wordCounts4 <- rowSums(m4)
+wordCounts4 <- sort(wordCounts4, decreasing=TRUE)
+
+words4 <- names(wordCounts4)
+words4
+matched4 <- match(words4, p, nomatch = 0)
+
+cp4pCounts <- wordCounts4[which(matched4 != 0)]
+cp4pCounts
+length(cp4pCounts)
+cp4pCounts
+cp4pPOS <- sum(cp4pCounts)
+cp4pPOS
+# Our sum shows 8 positive words. 
+
+
+matched4 <- match(words4, n, nomatch = 0)
+head(matched2,30)
+
+cp4nCounts <- wordCounts4[which(matched4 != 0)]
+cp4nCounts
+length(cp4nCounts)
+cp4nCounts
+cp4nPOS <- sum(cp4nCounts)
+cp4nPOS
+
+# Our sum shows 2 negative words. 
+sentiment4 <- cp4pPOS/cp4nPOS
+sentiment4
+
+# Now we are to graph this data. 
+
+
+
+
+barplot(c(cp1pPOS,cp2pPOS,cp3pPOS,cp4pPOS), names.arg = c("1st of 25%", "2nd 25%", "3rd 25%", "4th 25%"), main= "Positive Ratio") 
+
+barplot(c(cp1nPOS,cp2nPOS,cp3nPOS,cp4nPOS), names.arg = c("1st of 25%", "2nd 25%", "3rd 25%", "4th 25%"), main= "Negative Ratio")
+
+
+```
+
+# 5.2 Analysis
+
+What do you see from the positive/negative ratio in the graph? 
+State what you learned from the MLK speech using the sentiment analysis results: 
+
+> Throughout my previous code ive included comments about what ive learned, how ive troublehsooted my issues and what results I came up with. I used the book for a good amount of the material in this along with some youtube videos. I had to do some extra research on how to work with the cutpoints and luckily Blake Rosenberg in the "raise your hand" posted a very well thought out and detailed explaination on cutpoints and how to work with them. It helped me troubleshoot some errors even though my postive chart doesnt match exactly the photo provided in the materials. I cant seem to find what the issue is causing my postivie in the 1st 25% to be so high.. As for the results of the analysis its clear that the speach was very negative at the beginning and progressivly got very positive towards the 4th quartile. 

@@ -1,0 +1,96 @@
+---
+title: "Week 3: Lab - Visualization "
+author: '[Name]'
+date: '[Date]'
+output: html_document
+---
+
+---
+
+# Instructions
+
+In Chapter 12, we explored many different ways to “look at” the numbers. 
+For this lab, let’s explore the `mtcars` dataset that is included within R.
+
+This activity description does not provide the same level of code prompts as 
+previous labs – it is assumed that you remember or can look up the necessary code. 
+The overall goal of this activity is to use `ggplot2` to show different attributes 
+of the `mtcars` dataset. Please be sure to include both the code and the images 
+that were generated with your assignment.
+
+Add all of your libraries that you use for this assignment here.
+```{r setup}
+# Add your library below.
+
+# library(ggplot2)
+
+```
+
+# Generate the following visualizations:
+
+## Step 1 - Histogram
+
+Histogram of `mpg`
+
+```{r, "Step 1"}
+# Write your code below.
+
+
+
+```
+
+---
+
+## Step 2 - Boxplots
+
+Boxplots of `mpg` by `cyl` (i.e. 3 box plots: one for all cars with 4 cylinders, 
+one for all cars with 6 cylinders, and one with all the cars with 8 cylinders).
+
+```{r, "Step 2"}
+# Write your code below.
+
+
+
+```
+
+---
+
+## Step 3 - MultiLine chart 
+
+MultiLine chart of `wt` on the x-axis, `mpg` for the y-axis. 
+With a line for each `am` (i.e. two lines). Also be sure to show each point on the chart.
+
+```{r, "Step 3"}
+# Write your code below.
+
+
+
+```
+
+---
+
+## Step 4 - Barchart
+
+Barchart with the x-axis being the name of each car, and the height being `wt`.
+Make sure to rotate the x-axis labels, so we can actually read the car name.
+
+```{r, "Step 4"}
+# Write your code below.
+
+
+
+```
+
+---
+
+## Step 5 - Scatter chart
+Scatter chart with the x-axis being the `mpg` and the y-axis being the `wt` of the car. 
+Have the color and the size of each “symbol” (i.e., circle) represent how fast 
+the car goes (based on the `qsec` attribute).
+
+```{r, "Step 5"}
+# Write your code below.
+
+
+
+```

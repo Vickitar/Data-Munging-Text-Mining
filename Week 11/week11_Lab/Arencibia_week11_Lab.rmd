@@ -1,0 +1,127 @@
+---
+title: "Week 11: Lab - Build Your Own Shiny App"
+author: '[Victor Arencibia]'
+date: '[4/3/2022]'
+output: html_document
+---
+
+---
+
+# Instructions
+Create a scatter plot interactive application. In this application, use the 
+census data from earlier in the book, and let the user determine the X-axis, 
+the Y-axis, the color (optional), and the size based on what the user would 
+like to see. To do this, you will need multiple-choice menus, one for each 
+selection the user needs to make. You can do this by following the direction 
+written in the text book. Enjoy. 
+
+**For your information:**   
+The data is available through this link: 
+
+* http://www2.census.gov/programs-surveys/popest/tables/2010-2011/state/totals/nst-est2011-01.csv
+
+
+Add all of your libraries that you use for this assignment here.
+```{r setup}
+# Add your library below.
+
+library(shiny)
+library(ggplot2)
+library(ggmap)
+```
+
+---
+
+# Step 1 - Build the UI
+Build the UI below.
+
+```{r, "Step 1"}
+ui <- fluidPage(
+    selectInput("x", "x:",
+                c("july population" = "july11pop",
+                  "region of country" = "region",
+                  "change in population" = "popChange",
+                  "Percent change in population" = "percentChange")),
+    selectInput("y", "y:",
+                c("july population" = "july11pop",
+                  "region of country" = "region",
+                  "change in population" = "popChange",
+                  "Percent change in population" = "percentChange")),
+    selectInput("s", "size:",
+                c("july population" = "july11pop",
+                  "region of country" = "region",
+                  "change in population" = "popChange",
+                  "Percent change in population" = "percentChange")),
+    plotOutput("scatterplot")
+)
+
+```
+
+---
+
+# Step 2 - Build the Server
+Build the Server below.
+```{r, "Step 2"}
+server <- function(input, output) {
+    
+    dfStates <- readCensus()
+    dfStates <- dfStates[dfStates$stateName != 
+                             "District of Columbia", ]
+    
+    dfStates$region <- state.region
+    dfStates$stateName <- tolower(dfStates$stateName)
+    dfStates$popChange <- dfStates$july11pop - dfStates$july10pop
+    dfStates$percentChange <- dfStates$popChange/dfStates$july10pop * 100
+    
+    us <- map_data("state")
+    
+    output$scatterplot <- renderPlot(
+        ggplot(data = dfStates, aes_string(x = input$x, y = input$y, color=input$s)) + geom_point()
+            
+    )
+}
+
+
+```
+
+---
+
+# Step 3 - Create the Shiny App
+Deploy the shiny app.
+```{r, "Step 3"}
+
+Numberize <- function(inputVector)
+{
+  #get rid of commas
+  inputVector<-gsub(",","", inputVector)
+  #get rid of spaces
+  inputVector<-gsub(" ","", inputVector)
+  
+  return(as.numeric(inputVector))
+}
+
+readCensus <- function(){
+  urlToRead<- 
+  "http://www2.census.gov/programs-surveys/popest/tables/2010-2011/state/totals/nst-est2011-01.csv"
+  testFrame <- read.csv(url(urlToRead))
+  testFrame <-testFrame[-1:-8,]
+  testFrame<-testFrame[,1:5]
+  testFrame$stateName <- testFrame[,1]
+  testFrame<-testFrame[,-1]
+  testFrame<-testFrame[-52:-58,]
+
+  testFrame$stateName <- gsub("\\.","",testFrame$stateName)
+
+  testFrame$april10census <-Numberize(testFrame$X)
+  testFrame$april10base <-Numberize(testFrame$X.1)
+  testFrame$july10pop <-Numberize(testFrame$X.2)
+  testFrame$july11pop <-Numberize(testFrame$X.3)
+  testFrame <- testFrame[,-1:-4]
+  rownames(testFrame) <- NULL
+  
+  return(testFrame)
+}
+
+shinyApp(ui = ui, server = server)
+
+```

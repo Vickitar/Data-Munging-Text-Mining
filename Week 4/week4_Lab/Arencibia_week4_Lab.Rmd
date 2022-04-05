@@ -1,0 +1,181 @@
+---
+title: 'Week 4: Lab - Map Data and Visualization'
+author: 'Victor Arencibia'
+date: '2/5/2022'
+output: html_document
+---
+
+---
+
+# Instructions
+
+> **Warning: Do not copy and paste any code I give out here. You MUST write them up.** 
+**If you copy and paste code from here to your RStudio, you will receive errors.** 
+
+In Chapter 13 we explored how to use “mashup” data to create a map and put additional 
+data “on top of” the map. In this assignment, we will do that, but with one 
+additional requirement to “zoom” into the region of the United States where the
+data is of interest.
+
+First, read in the dataset `crimeInSYR.csv` (in the project's data folder). 
+The column show the type of crime, the address of the crime, the city of the crime, 
+and the date of the crime. As you can guess from the title of the data file, 
+the focus of the dataset is crimes around the Syracuse, NY area.
+
+For this assignment, you need to create two different, but related, maps: 
+A map with “points” for each of the crimes, and a “density map” showing the same information.
+
+Install the "ggplot2" and "ggmap" packages as needed, and load the two packages
+in the setup code chunk below.
+
+---
+
+```{r setup, message = FALSE}
+# Add your library below.
+library(readxl)
+
+
+```
+
+# Step 1 - A map with “points” for each of the crimes
+
+## Step 1.1 - Read the data
+1. Read in `crimeInSYR.csv` and save it as an object.
+2. Investigate the data structure. 
+
+```{r, "Step 1.1"}
+# Write your code below.
+crimeInSYR <- read_excel("data/crimeInSYR.xlsx")
+View(crimeInSYR)
+
+crimedf <- crimeInSYR
+
+```
+
+## Step 1.2 - Clean the data
+1. Change the column names to ("type", "address", "city", "date")
+2. Combine the `address` column and `city` column together and store the values 
+into a new column called `address_complete`
+
+## Step 1.3 - Get your Google API Key
+1. You need a Google API key for the next step, which uses the `geocode()` function. 
+Google API requires you to register your  credit  card  information.
+    - To get the API key, follow the directions:
+https://developers.google.com/maps/documentation/geocoding/get-api-key
+    - If you already have Google API key, go to 
+https://console.cloud.google.com/google/maps-apis/api-list?project=uber-kmeans-1549390594743
+      - Then click "Geocoding API" and enable it.
+      - Go back a page, click "CREDENTIAL" in the left navigation bar
+      - Retrieve your google API key.
+      - Enter your API key in the `register_google()` function below.
+      
+```{r, "Step 1.3", echo = FALSE}
+
+library(dplyr)
+
+str(crimedf)
+
+crimedf <- rename(crimedf, type = 'Aggravated assault')
+crimedf <- rename(crimedf, address = '800 block Avery Av')
+crimedf <- rename(crimedf, city = 'Syracuse')
+crimedf <- rename(crimedf, date = '42358')
+
+crimedf$address_complete <- paste(crimedf$address,crimedf$city)
+
+library(ggmap)
+api <- "AIzaSyAxlP-tNYSZlWaMI9she8PPHXynJtSqw7s"
+register_google(key=api)
+
+
+# Your API key will not display on your homework because `echo = FALSE`.
+
+# Remove the `#` in front of the next line of code and enter your API key.
+
+# register_google(key <-"your API key")
+
+``` 
+
+## Step 1.4 - Get Latitudes and Longitudes
+1. Get latitudes and longitudes for all address in the crime dataset and store them 
+in a new column using the `geocode()` function.
+2. Make sure the new dataframe includes `lon` and `lat` columns.
+3. Investigate the structure. 
+
+It should look like this at this point:
+
+![Step 1.4 Environment](data/week4lab1.PNG)
+
+```{r, "Step 1.4"}
+# Write your code below.
+
+crimedf$geocode <- geocode(crimedf$address_complete)
+
+str(crimedf)
+
+```
+
+## Step 1.5 - Create mapSimple object
+
+Use the following code to create an object called `mapSimple`:
+
+```
+#get latitude and longtitude for syracuse university
+syr <-geocode ("syracuse university, syracuse, ny")
+syr
+
+# obtain maps from multiple sources and zoom into the region around syracuse university
+syr.map <-get_map(location=syr, zoom=11)
+
+# generate map and sore it in "mapSimple"
+mapSimple <- ggmap(syr.map)
+# plot the map
+mapSimple
+```
+
+```{r, "Step 1.5"}
+# Write your code below.
+syr <- geocode('syracuse university, syracuse, ny')
+syr
+
+syr.map <-get_map(location=syr, zoom=11)
+mapSimple <- ggmap(syr.map)
+mapSimple
+```
+
+## Step 1.6 - Create crimemape
+
+Create an object called `crimemap` based on `mapSimple`, where each point 
+represents one crime.
+
+It should look like this:
+
+![Step 1.6 Map](data/week4lab2.PNG)
+
+```{r, "Step 1.6"}
+# Write your code below.
+
+crimemap <- mapSimple + geom_point(data=crimedf, aes(x=geocode$lon, y=geocode$lat), color="blue")
+crimemap
+
+```
+
+---
+
+# Step 2 - A “density map” showing the same information.
+
+Use the `geom_density2d()` function. See the documentation as well as the 
+ggplot cheatsheet to acquire more information on this. 
+
+The plot should look like this:
+
+![Step 2 Map](data/week4lab3.PNG)
+
+```{r, "Step 2"}
+# Write your code below.
+
+?geom_density2d
+crimedensity <- mapSimple + geom_density2d(data=crimedf, aes(x=geocode$lon, y=geocode$lat), color="blue")
+crimedensity
+
+
+```

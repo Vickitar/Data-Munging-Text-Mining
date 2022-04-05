@@ -1,0 +1,244 @@
+---
+title: 'Week 3: HW - Visualizing Air Quality Analysis'
+author: 'Victor Arencibia'
+date: '1/29/2022'
+output: html_document
+---
+
+---
+
+# Instructions
+
+Use the built-in `airquality` R dataset to visualize the air quality in 1973.
+Explore the patterns in the data by creating histograms, boxplots, line graphs, 
+heatmaps, and scatterplots. 
+
+Load the libraries `ggplot2` and `reshape2` in the setup chunk below.
+
+---
+
+```{r setup, message = FALSE}
+# Add your library below.
+EnsurePackage <- function(x) {
+x <- as.character(x)
+if (!require(x,character.only=TRUE)) {
+  install.packages(pkgs=x, repos="https://cran.r-project.org")
+  require(x,character.only=TRUE)
+  }
+}
+EnsurePackage("ggplot2")
+EnsurePackage("reshape2")
+library(Hmisc)
+library(dplyr)
+EnsurePackage("dplyr")
+library(tidyr)
+library(ggplot2)
+
+```
+
+# Step 1 - Load the Data
+
+We will use the `airquality` dataset that you have as part of your R installation. 
+Read the `airquality` data using the `data.frame()` function and save it as `air`.
+
+```{r, "Step 1"}
+# Write your code below.
+data("airquality")
+
+
+```
+
+---
+
+# Step 2 - Clean the Data
+
+After you load the data, there will be some NA values in the data. 
+You need to figure out what to do about those nasty NAs. Google is your friend. 
+Use Google actively to find a way to get rid of NAs using R. 
+
+**HINT:** Find columns that include NA values first 
+(use `colSums()` function, then replace NAs with the mean value of these columns).
+
+Optional: If you want to implement a better approaches to deal with missing data, 
+"multiple imputation" would be where you should go.   
+You can check sources like:
+
+ - https://gking.harvard.edu/amelia
+ - http://cran.revolutionanalytics.com/web/packages/mitools/index.html
+
+```{r, "Step 2"}
+# Write your code below.
+
+airdata <- na.omit(airquality)
+colSums(is.na(airdata))
+
+```
+
+---
+
+
+# Step 3 - Understand the data distribution
+
+Create the following visualizations:
+
+ - Histograms for each of the variables
+ - Boxplot for `Ozone`, and boxplots for different `wind` values 
+ (round `wind` to get a good number of “buckets”) 
+ 
+**HINT:** you can create one graph with `Ozone` as X-axis and `Wind` as Y-axis. 
+Also, you can create two graphs (one with `Ozone` values on the Y-axis, and 
+another one with Y-axis value is rounded value of `Wind`). In this case, you need 
+to create a fake grouping variable `(x = factor(0))`.
+
+```{r, "Step 3"}
+# Write your code below.
+
+#hist.data.frame(air)
+airdata <- airdata %>% 
+ mutate_if(is.numeric, round)
+#air$Ozone <- as.factor(air$Ozone)
+#air$Wind <- as.factor(air$Wind)
+#ggplot(air, aes(factor(0), y = Ozone)) + geom_boxplot(group = 1)
+#ggplot(air, aes(factor(0), y = Wind)) + geom_boxplot()
+
+ggplot(airdata,aes(x=Ozone)) + geom_histogram(color = "black", fill = "white")
+ggplot(airdata,aes(x=Wind)) + geom_histogram(color = "black", fill = "white")
+ggplot(airdata,aes(x=Solar.R)) + geom_histogram(color = "black", fill = "white")
+ggplot(airdata,aes(x=Temp)) + geom_histogram(color = "black", fill = "white")
+ggplot(airdata,aes(x=Month)) + geom_histogram(color = "black", fill = "white")
+ggplot(airdata,aes(x=Day)) + geom_histogram(color = "black", fill = "white")
+
+
+
+ggplot(airdata,aes(as.factor(Ozone),Month)) + geom_boxplot(fill = 'purple')
+
+ggplot(airdata,aes(as.factor(Wind),Ozone)) + geom_boxplot(fill = 'lightblue')
+
+```
+
+---
+
+# Step 4 - Explore how the data changes over time
+
+First, create the appropriate dates (this data was from 1973). 
+Then create line charts for `Ozone`, `Temp`, `Wind` and `Solar.R` 
+(one line chart for each, and then one chart with 4 lines, each variable having a different color). 
+
+**HINT:** 
+
+1. Combine (use `paste()` function) 1973 with the `Month` and `Day` columns,
+using "/" in between
+2. Use `as.Date()` function to transform the value to "Date" format and create 
+a `Date` column to record this value. Use `?as.Date` to find example use of this function.
+
+Note that for the chart with 4 lines, you need to think about how to effectively use the y-axis. 
+
+**HINT:** 
+You need to "melt" the columns so that it becomes "long" format. You can either 
+use the `melt()` function or use the `gather()` from the "tidyr" package for the process. 
+Also, compared to other values, the `Wind` values are too small, 
+so they are close to the x-axis. You need to multiply `Wind` by 10 to address this problem. 
+
+The correct result should look like this:
+![Step 4 Line Graph](data/week3hw1.PNG)
+
+```{r, "Step 4"}
+# Write your   below.
+
+rm(linegraph)
+
+airdata$date <- as.Date(paste("1973", airdata$Month,airdata$Day, sep="/"))
+
+ggplot(airdata, aes(x=date, y = Ozone)) + geom_line(color = "blue")
+ggplot(airdata, aes(x=date, y = Temp)) + geom_line(color = "Orange")
+ggplot(airdata, aes(x=date, y = Wind)) + geom_line(color = "Red")
+ggplot(airdata, aes(x=date, y = Solar.R)) + geom_line(color = "Green")
+
+linegraph <- ggplot(airdata, aes(x= date, y = Ozone)) + geom_line(color = "blue")
+airdata$Wind = airdata$Wind * 10
+linegraph <- linegraph + geom_line(aes(x = date, y = Temp), color = "Orange")
+linegraph <- linegraph + geom_line(aes(x = date, y = Wind), color = "red")
+linegraph <- linegraph + geom_line(aes(x = date, y = Solar.R), color = "Green")
+
+
+linegraph
+
+
+```
+ 
+
+# Step 5: Look at all the data via a heatmap
+
+Create a heatmap, with each day (using dates) along the x-axis and 
+`Ozone`, `Temp`, `Wind` and `Solar.r` along the y-axis.
+
+Note that you need to figure out how to show the relative change equally across 
+all the variables. 
+
+**HINTS:** 
+- You may find this post helpful:
+- https://learnr.wordpress.com/2010/01/26/ggplot2-quick-heatmap-plotting/
+- Melt the original table to make a long format before visualization using `geom_tile()`
+
+Remember, your programming skills will improve as much as you struggle and 
+put effort in them.
+
+The correct result should look like this:
+![Step 4 Line Graph](data/week3hw2.PNG)
+
+```{r, "Step 5"}
+# Write your code below.
+
+
+
+air.m <- unite(airdata, Month_Day,Month,Day, sep = "/")
+air.melt <- melt(air.m, id=c("Month_Day"))
+
+
+ggplot(air.melt, aes(x=Month_Day, y=variable, fill = value)) + geom_tile()
+
+
+
+
+
+#air.m <- unite(airdata, Month, Day, sep = "/")
+
+
+
+
+
+
+
+
+```
+
+# Step 6: Look at all the data via a scatter chart
+
+Create a scatter chart, with:
+ - the x-axis representing the `Wind`
+ - the y-axis representing the `Temp`
+ - the size of each dot representing the `Ozone`
+ - the color representing `Solar.R`
+
+```{r, "Step 6"}
+# Write your code below.
+
+
+ggplot (airdata, aes (Wind, Temp)) + 
+  geom_point ( aes ( size = Ozone, color = Solar.R))
+
+
+```
+
+# Step 7: Final analysis
+### You MUST answer to these questions in your compiled file.
+
+Do you see any patterns after exploring the data?
+
+> After doing the assignment I have trouble really understanding or "seeing" a pattern. What I did notice is that a lot of the data has
+to be code and moved aorund in order to properly display results. It seems like it could get into a sticky situation if/when a 
+novice coder begins to mess with the data and visualization. 
+
+What was the most useful visualization?
+
+> I believe the Line graphs were the most useful visualization. It let us see how it all moves in a familiar fashion. 
